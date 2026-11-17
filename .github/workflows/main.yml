@@ -16,6 +16,25 @@ jobs:
     - name: Extract Jarvis.zip
       run: unzip -o Jarvis.zip
 
+    - name: Auto-Fix Missing Imports & Dependencies
+      working-directory: ./Jarvis
+      run: |
+        # 1. JarvisInCallService.kt mein CallAudioState import jodna
+        sed -i '1s/^/import android.telecom.CallAudioState\n/' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
+        sed -i '/package com.jarvis.app/a import android.telecom.CallAudioState' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
+        # Duplicate top line hatana agar package upar tha
+        sed -i '1{/^import/d;}' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
+
+        # 2. SecurePrefs.kt mein MasterKey import ensure karna
+        if ! grep -q "import androidx.security.crypto.MasterKey" app/src/main/java/com/jarvis/app/SecurePrefs.kt; then
+          sed -i '/package com.jarvis.app/a import androidx.security.crypto.MasterKey\nimport androidx.security.crypto.EncryptedSharedPreferences' app/src/main/java/com/jarvis/app/SecurePrefs.kt
+        fi
+
+        # 3. build.gradle.kts mein security-crypto dependency ensure karna
+        if ! grep -q "security-crypto" app/build.gradle.kts; then
+          sed -i '/dependencies {/a \    implementation("androidx.security:security-crypto:1.1.0-alpha06")' app/build.gradle.kts
+        fi
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
