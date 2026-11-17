@@ -19,20 +19,16 @@ jobs:
     - name: Auto-Fix Missing Imports & Dependencies
       working-directory: ./Jarvis
       run: |
-        # 1. JarvisInCallService.kt mein CallAudioState import jodna
-        sed -i '1s/^/import android.telecom.CallAudioState\n/' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
+        # 1. JarvisInCallService.kt में CallAudioState इम्पोर्ट जोड़ना
         sed -i '/package com.jarvis.app/a import android.telecom.CallAudioState' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
-        # Duplicate top line hatana agar package upar tha
-        sed -i '1{/^import/d;}' app/src/main/java/com/jarvis/app/JarvisInCallService.kt
 
-        # 2. SecurePrefs.kt mein MasterKey import ensure karna
+        # 2. build.gradle.kts में पुराने security-crypto को हटाकर 1.1.0-alpha06 लगाना
+        sed -i '/security-crypto/d' app/build.gradle.kts
+        sed -i '/dependencies {/a \    implementation("androidx.security:security-crypto:1.1.0-alpha06")' app/build.gradle.kts
+
+        # 3. SecurePrefs.kt में MasterKey इम्पोर्ट सुनिश्चित करना
         if ! grep -q "import androidx.security.crypto.MasterKey" app/src/main/java/com/jarvis/app/SecurePrefs.kt; then
-          sed -i '/package com.jarvis.app/a import androidx.security.crypto.MasterKey\nimport androidx.security.crypto.EncryptedSharedPreferences' app/src/main/java/com/jarvis/app/SecurePrefs.kt
-        fi
-
-        # 3. build.gradle.kts mein security-crypto dependency ensure karna
-        if ! grep -q "security-crypto" app/build.gradle.kts; then
-          sed -i '/dependencies {/a \    implementation("androidx.security:security-crypto:1.1.0-alpha06")' app/build.gradle.kts
+          sed -i '/package com.jarvis.app/a import androidx.security.crypto.MasterKey' app/src/main/java/com/jarvis/app/SecurePrefs.kt
         fi
 
     - name: Set up JDK 17
